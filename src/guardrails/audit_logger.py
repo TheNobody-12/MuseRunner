@@ -108,6 +108,18 @@ class ComplianceAuditLogger:
 
         return True
 
+    def read_entries(self) -> list[AuditEntry]:
+        """Read and parse all audit entries from the log file."""
+        if not self._path.exists():
+            return []
+        entries: list[AuditEntry] = []
+        with self._path.open("r", encoding="utf-8") as f:
+            for line in f:
+                stripped = line.strip()
+                if stripped:
+                    entries.append(AuditEntry.model_validate_json(stripped))
+        return entries
+
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
