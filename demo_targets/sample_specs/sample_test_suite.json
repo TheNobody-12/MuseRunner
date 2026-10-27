@@ -1,0 +1,187 @@
+{
+  "suite_id": "SUITE-RUN-20261026-001",
+  "runbook": {
+    "app_name": "MockBank Enterprise Portal",
+    "base_url": "http://localhost:8080",
+    "auth_strategy": "No auth required for demo target. In production, navigate to /login → enter vaulted credentials → wait for dashboard redirect.",
+    "global_navigation_notes": "All test cases start from the wire transfer page at base_url. The mock app supports ?chaos_mode=true to simulate broken selectors.",
+    "environment": "local-demo"
+  },
+  "test_cases": [
+    {
+      "test_id": "TC-101",
+      "title": "Standard Wire Transfer — Valid Domestic",
+      "suite_category": "web_playwright",
+      "priority": "critical",
+      "raw_steps": [
+        "Navigate to the wire transfer page",
+        "Enter Account Number '1234567890'",
+        "Enter SSN '123-45-6789'",
+        "Enter Amount '5000'",
+        "Click 'Confirm Transfer'"
+      ],
+      "expected_result": "Confirmation page shows reference 'TXN-MOCK-001' with status 'submitted'",
+      "preconditions": ""
+    },
+    {
+      "test_id": "TC-102",
+      "title": "Wire Transfer — Minimum Amount $1",
+      "suite_category": "web_playwright",
+      "priority": "high",
+      "raw_steps": [
+        "Navigate to the wire transfer page",
+        "Enter Account Number '9999999999'",
+        "Enter SSN '999-99-9999'",
+        "Enter Amount '1'",
+        "Click 'Confirm Transfer'"
+      ],
+      "expected_result": "Confirmation page shows reference with status 'submitted'",
+      "preconditions": ""
+    },
+    {
+      "test_id": "TC-103",
+      "title": "Wire Transfer — Large Amount $1,000,000",
+      "suite_category": "web_playwright",
+      "priority": "high",
+      "raw_steps": [
+        "Navigate to the wire transfer page",
+        "Enter Account Number '5555555555'",
+        "Enter SSN '555-55-5555'",
+        "Enter Amount '1000000'",
+        "Click 'Confirm Transfer'"
+      ],
+      "expected_result": "Confirmation page shows reference with status 'submitted'",
+      "preconditions": ""
+    },
+    {
+      "test_id": "TC-104",
+      "title": "Wire Transfer — PII Redaction Verified",
+      "suite_category": "web_playwright",
+      "priority": "critical",
+      "raw_steps": [
+        "Navigate to the wire transfer page",
+        "Enter Account Number '1111222233'",
+        "Enter SSN '111-22-3333'",
+        "Enter Amount '2500'",
+        "Verify that SSN was redacted to {{REDACTED_SSN_*}} in audit log before submission",
+        "Click 'Confirm Transfer'"
+      ],
+      "expected_result": "Transfer succeeds AND audit_trail.jsonl contains redacted tokens, NOT raw SSN",
+      "preconditions": ""
+    },
+    {
+      "test_id": "TC-105",
+      "title": "Wire Transfer — Credit Card in Notes Field Redacted",
+      "suite_category": "web_playwright",
+      "priority": "medium",
+      "raw_steps": [
+        "Navigate to the wire transfer page",
+        "Enter Account Number '8888888888'",
+        "Enter SSN '888-88-8888'",
+        "Enter Amount '750'",
+        "Click 'Confirm Transfer'"
+      ],
+      "expected_result": "Transfer succeeds with credit card data redacted from all logs",
+      "preconditions": ""
+    },
+    {
+      "test_id": "TC-106",
+      "title": "Wire Transfer — Email in Account Notes Redacted",
+      "suite_category": "web_playwright",
+      "priority": "medium",
+      "raw_steps": [
+        "Navigate to the wire transfer page",
+        "Enter Account Number '7777777777'",
+        "Enter SSN '777-77-7777'",
+        "Enter Amount '300'",
+        "Click 'Confirm Transfer'"
+      ],
+      "expected_result": "Transfer succeeds with email addresses redacted from all logs",
+      "preconditions": ""
+    },
+    {
+      "test_id": "TC-107",
+      "title": "Wire Transfer — Form Field Validation (Empty Amount)",
+      "suite_category": "web_playwright",
+      "priority": "medium",
+      "raw_steps": [
+        "Navigate to the wire transfer page",
+        "Enter Account Number '6666666666'",
+        "Enter SSN '666-66-6666'",
+        "Leave Amount field empty",
+        "Click 'Confirm Transfer'"
+      ],
+      "expected_result": "Browser HTML5 validation prevents submission",
+      "preconditions": ""
+    },
+    {
+      "test_id": "TC-108",
+      "title": "Wire Transfer — Health Endpoint Responds",
+      "suite_category": "web_playwright",
+      "priority": "low",
+      "raw_steps": [
+        "Send GET request to /health endpoint"
+      ],
+      "expected_result": "Response contains {\"status\": \"healthy\", \"service\": \"mockbank\"}",
+      "preconditions": ""
+    },
+    {
+      "test_id": "TC-109",
+      "title": "Wire Transfer — Page Load Performance",
+      "suite_category": "web_playwright",
+      "priority": "medium",
+      "raw_steps": [
+        "Navigate to the wire transfer page",
+        "Measure page load time"
+      ],
+      "expected_result": "Page loads within 2000ms",
+      "preconditions": ""
+    },
+    {
+      "test_id": "TC-110",
+      "title": "Wire Transfer — Self-Healing: Submit Button Renamed (Chaos Mode)",
+      "suite_category": "web_playwright",
+      "priority": "critical",
+      "raw_steps": [
+        "Navigate to the wire transfer page with chaos_mode=true",
+        "Enter Account Number '4444444444'",
+        "Enter SSN '444-44-4444'",
+        "Enter Amount '10000'",
+        "Click 'Confirm Transfer' (original selector #confirm-transfer-btn will FAIL)"
+      ],
+      "expected_result": "Self-healing agent detects renamed button (#btn-legacy-v2-obfuscated-99), auto-patches selector, and completes transfer successfully",
+      "preconditions": "chaos_mode=true must be enabled on the target app"
+    },
+    {
+      "test_id": "TC-111",
+      "title": "Wire Transfer — Self-Healing: Multiple Selector Mutations",
+      "suite_category": "web_playwright",
+      "priority": "critical",
+      "raw_steps": [
+        "Navigate to the wire transfer page with chaos_mode=true",
+        "Enter Account Number '3333333333'",
+        "Enter SSN '333-33-3333'",
+        "Enter Amount '7500'",
+        "Click 'Confirm Transfer' (selector will be mutated)"
+      ],
+      "expected_result": "Self-healing agent recovers from the selector mutation and completes transfer with healing diff logged in audit trail",
+      "preconditions": "chaos_mode=true must be enabled on the target app"
+    },
+    {
+      "test_id": "TC-112",
+      "title": "Wire Transfer — Application Bug: Incorrect Fee Calculation",
+      "suite_category": "web_playwright",
+      "priority": "critical",
+      "raw_steps": [
+        "Navigate to the wire transfer page",
+        "Enter Account Number '2222222222'",
+        "Enter SSN '222-22-2222'",
+        "Enter Amount '50000'",
+        "Click 'Confirm Transfer'",
+        "Verify that the transfer fee is calculated as 0.5% of amount ($250)"
+      ],
+      "expected_result": "Transfer fee should be $250.00 (0.5% of $50,000)",
+      "preconditions": "This test is EXPECTED TO FAIL — the mock app does not implement fee calculation, exposing a genuine application defect"
+    }
+  ]
+}
